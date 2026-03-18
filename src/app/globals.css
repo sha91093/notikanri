@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8f9fa;
+  --foreground: #1a1a1a;
+  --primary: #2d6a4f;
+  --primary-light: #52b788;
+  --primary-dark: #1b4332;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", Arial, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* leaflet */
+@import "leaflet/dist/leaflet.css";
+
+/* FullCalendar 日本語対応 */
+.fc {
+  font-family: inherit;
+  font-size: 14px;
+}
+.fc-toolbar-title {
+  font-size: 1.1rem !important;
+  font-weight: 700;
+}
+.fc-button {
+  font-size: 0.875rem !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* 高齢者向け: タップ領域を十分に確保 */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

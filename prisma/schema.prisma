@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(MEMBER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  farmGroupUsers FarmGroupUser[]
+  cropPlans      CropPlan[]
+  scheduleEvents ScheduleEvent[]
+  workLogs       WorkLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model FarmGroup {
+  id        String   @id @default(cuid())
+  name      String
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members        FarmGroupUser[]
+  parcels        Parcel[]
+  weatherRecords WeatherRecord[]
+}
+
+model FarmGroupUser {
+  id          String   @id @default(cuid())
+  farmGroupId String
+  userId      String
+  role        Role     @default(MEMBER)
+  joinedAt    DateTime @default(now())
+
+  farmGroup FarmGroup @relation(fields: [farmGroupId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([farmGroupId, userId])
+}
+
+model Parcel {
+  id          String   @id @default(cuid())
+  name        String
+  area        Float?
+  geometry    Json
+  farmGroupId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  farmGroup      FarmGroup       @relation(fields: [farmGroupId], references: [id], onDelete: Cascade)
+  cropPlans      CropPlan[]
+  scheduleEvents ScheduleEvent[]
+  workLogs       WorkLog[]
+}
+
+model CropPlan {
+  id             String   @id @default(cuid())
+  parcelId       String
+  year           Int
+  crop1          String?
+  crop2          String?
+  assignedUserId String?
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  parcel       Parcel @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  assignedUser User?  @relation(fields: [assignedUserId], references: [id])
+
+  @@unique([parcelId, year])
+}
+
+model ScheduleEvent {
+  id             String   @id @default(cuid())
+  title          String
+  parcelId       String?
+  startDate      DateTime
+  endDate        DateTime
+  allDay         Boolean  @default(true)
+  assignedUserId String?
+  memo           String?
+  year           Int
+  color          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  parcel       Parcel? @relation(fields: [parcelId], references: [id])
+  assignedUser User?   @relation(fields: [assignedUserId], references: [id])
+}
+
+model WorkLog {
+  id             String       @id @default(cuid())
+  date           DateTime
+  parcelId       String?
+  content        String       @db.Text
+  weather        WeatherType?
+  assignedUserId String?
+  memo           String?      @db.Text
+  year           Int
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  parcel       Parcel?  @relation(fields: [parcelId], references: [id])
+  assignedUser User?    @relation(fields: [assignedUserId], references: [id])
+  photos       Photo[]
+}
+
+model Photo {
+  id        String   @id @default(cuid())
+  workLogId String
+  url       String
+  createdAt DateTime @default(now())
+
+  workLog WorkLog @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+}
+
+model WeatherRecord {
+  id               String   @id @default(cuid())
+  date             DateTime
+  farmGroupId      String
+  weatherCode      Int?
+  tempMax          Float?
+  tempMin          Float?
+  precipitation    Float?
+  sunshineDuration Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  farmGroup FarmGroup @relation(fields: [farmGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([date, farmGroupId])
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum WeatherType {
+  SUNNY
+  CLOUDY
+  RAINY
+  SNOWY
+  PARTLY_CLOUDY
+}
